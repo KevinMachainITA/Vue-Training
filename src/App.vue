@@ -51,6 +51,7 @@
   }
 
   h1{
+
     color: #fff;
     font-size: 4rem;
     text-align: center;
