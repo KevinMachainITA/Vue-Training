@@ -1,11 +1,14 @@
 <script setup>
   import {ref, computed} from "vue";
+  import Number from "../src/components/Number.vue";
 
   const name = "Vue 3";
 
   const counter = ref(0);
 
   const numberList = ref([]);
+
+  const favorite = ref(0);
 
   const increase = () => {
     counter.value++;
@@ -17,6 +20,10 @@
 
   const reset = () => {
     counter.value = 0;
+  }
+
+  const handleFavorite = (num) => {
+    favorite.value = num;
   }
 
   /**
@@ -80,9 +87,21 @@
 
   </main>
 
-  <h3 class="title-list">Number list</h3>
+  <div class="section">
+    <h3 class="title-list">Number list</h3>
+    <h3 class="title-list">Favorite number: {{favorite}}</h3>
+  </div>
+  
   <ul class="list-numbers">
-    <li v-for="(num, index) in numberList" :key="index">{{num}}</li>
+    <Number  
+      v-for="(num, index) in numberList" 
+      :key="index"
+      :number="num"
+      :id="index"
+      :favorite="favorite"
+      @handleFavorite = "handleFavorite"
+    >{{num}}
+    </Number>
   </ul>
 
 </template>
@@ -149,6 +168,12 @@
     color: #3f3f3f
   }
 
+  .section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
   .title-list {
     margin: 2rem 0;
     color: #fff;
@@ -159,6 +184,7 @@
     display: grid;
     grid-template-columns: repeat(7, 1fr); /* 8 columns */
     gap: 1rem;
+    list-style-type: none;
   }
 
   .button-disabled {
