@@ -1,203 +1,122 @@
 <script setup>
-  import {ref, computed} from "vue";
-  import Number from "../src/components/Number.vue";
+import { ref, computed, onMounted } from "vue";
+import PostCard from "../src/components/PostCard.vue";
+import ButtonNextPrev from "../src/components/ButtonNextPrev.vue";
+import LoadingSpinner from "./components/LoadingSpinner.vue";
 
-  const name = "Vue 3";
+const postForPage = 10;
 
-  const counter = ref(0);
+const listPost = ref([]);
+const favoritePost = ref({});
+const pageStart = ref(0);
+const pageEnd = ref(postForPage);
+const loading = ref(true);
 
-  const numberList = ref([]);
-
-  const favorite = ref(0);
-
-  const increase = () => {
-    counter.value++;
+const fetchData = async () => {
+  try {
+    const res = await fetch("https://jsonplaceholder.typicode.com/posts");
+    const data = await res.json();
+    listPost.value = data;
+  } catch (error) {
+    console.log("Error:", error);
+  } finally {
+    //forced to show spinner
+    setTimeout(()=> {
+      loading.value = false;
+    }, 1500)
   }
+};
 
-  const decrease = () => {
-    counter.value--;
+/**
+ * Determines if the click is to 10 next posts or 10 previuos posts, True is to next and False is to previuos.
+ *
+ * @param {boolean} clickPage - The boolean to determine click.
+ * @returns {void}
+ */
+const handlePage = (clickPage) => {
+  if (clickPage && pageEnd.value < listPost.value.length) {
+    pageStart.value += postForPage;
+    pageEnd.value += postForPage;
+  } else if (!clickPage && pageStart.value > 0) {
+    pageStart.value -= postForPage;
+    pageEnd.value -= postForPage;
   }
+};
 
-  const reset = () => {
-    counter.value = 0;
-  }
+const handleFavoritePost = (post) => {
+  favoritePost.value = post;
+};
 
-  const handleFavorite = (num) => {
-    favorite.value = num;
-  }
+const maxLength = computed(() => listPost.value.length);
 
-  /**
-   * Adds a number to the `numberList` array if it doesn't already exist.
-   * If the number is found in the list, it logs a message to the console.
-   * 
-   * @param {number} number - The number to add to the list.
-   * @returns {void}
-  */
-  const add = (number) => {
-    const index = numberList.value.findIndex(num => num === number);
-
-    if(index === -1){
-      numberList.value.push(number);
-    } else {
-      console.log("this number is in the list");
-    }
-  }
-
-  /**
-   * Determines if the "Add" button should be available.
-   * If the current `counter` value is found in the `numberList`, the button will be disabled.
-   * 
-   * @returns {boolean} - Returns `true` if the button should be disabled, `false` otherwise.
-   */
-  const buttonAvailable = computed(() => {
-    const numberSearch = numberList.value.find(num => num === counter.value);
-
-    if(numberSearch === 0){
-      return true;
-    }
-
-    //If currently counter number is within array, the add button will be disabled
-    return numberSearch ? true : false;
-
-  });
-
-  const classCounter = computed(() => {
-    if(counter.value === 0){
-      return 'zero'
-    } else if (counter.value > 0){
-      return 'positive'
-    } else{
-      return 'negative'
-    } 
-  });
-  
+onMounted(() => {
+  fetchData();
+});
 </script>
 
 <template>
-  <main class="container">
-    <h1>!HI {{ name.toUpperCase() }}!</h1>
-    <h2 :class="classCounter">{{counter}}</h2>
+  <div class="spinner" v-if="loading">
+    <LoadingSpinner></LoadingSpinner>
+  </div>
 
-    <div class="main-buttons">
-      <button @click="increase()" class="button">Increase</button>
-      <button @click="reset()" class="button">Reset</button>
-      <button @click="decrease()" class="button">Decrease</button>
-      <button @click="add(counter)" :class="buttonAvailable ? 'button-disabled' : 'button'" :disabled="buttonAvailable">Add</button>
+  <main class="container" v-else>
+    <h1>List Posts</h1>
+    <ButtonNextPrev
+      :pageStart="pageStart"
+      :pageEnd="pageEnd"
+      @handlePage="handlePage"
+      :maxLength="maxLength"
+    ></ButtonNextPrev>
+    <div class="post-title">
+      <h3 class="post-favorite">Favorite post id: {{ favoritePost.id }}</h3>
+      <h4 class="post-pagination">{{ pageStart + 1 }}-{{ pageEnd }}</h4>
     </div>
 
+    <section>
+      <PostCard
+        v-for="post in listPost.slice(pageStart, pageEnd)"
+        :key="post.id"
+        :post="post"
+        @handleFavoritePost="handleFavoritePost"
+      ></PostCard>
+    </section>
   </main>
-
-  <div class="section">
-    <h3 class="title-list">Number list</h3>
-    <h3 class="title-list">Favorite number: {{favorite}}</h3>
-  </div>
-  
-  <ul class="list-numbers">
-    <Number  
-      v-for="(num, index) in numberList" 
-      :key="index"
-      :number="num"
-      :id="index"
-      :favorite="favorite"
-      @handleFavorite = "handleFavorite"
-    >{{num}}
-    </Number>
-  </ul>
-
 </template>
 
 <style>
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  justify-items: center;
+}
 
-  .container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    justify-items: center;
-  }
+h1 {
+  color: #fff;
+  font-size: 4rem;
+  text-align: center;
+}
 
-  h1{
+.post-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1rem;
+}
 
-    color: #fff;
-    font-size: 4rem;
-    text-align: center;
-  }
+.post-favorite {
+  color: #fff;
+  margin-top: 1rem;
+}
 
-  h2{
-    text-align: center;
-    font-size: 2.5rem;
-  }
+.post-pagination {
+  margin-top: 1rem;
+  color: #e3e3e3;
+}
 
-  .main-buttons{
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 columns */
-    gap: 1rem; 
-    width: 100%;
-    justify-content: center;
-    align-items: center;
-    margin-top: 1rem;
-  }
-
-  .main-buttons button:nth-child(4){
-    grid-column: 2 / 3; /* Place in the second column */
-  }
-
-  .button {
-    background-color: #04AA6D; /* Green */
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    cursor: pointer;
-  }
-
-  .button:hover{
-    cursor: pointer;
-  }
-
-  .positive {
-    color: #04AA6D;
-  }
-
-  .negative {
-    color: #f44336;
-  }
-
-  .zero {
-    color: #3f3f3f
-  }
-
-  .section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .title-list {
-    margin: 2rem 0;
-    color: #fff;
-    text-transform: uppercase;
-  }
-
-  .list-numbers {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr); /* 8 columns */
-    gap: 1rem;
-    list-style-type: none;
-  }
-
-  .button-disabled {
-    background-color: #04AA6D; /* Green */
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+.spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 </style>
