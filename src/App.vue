@@ -1,122 +1,87 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
-import PostCard from "../src/components/PostCard.vue";
-import ButtonNextPrev from "../src/components/ButtonNextPrev.vue";
-import LoadingSpinner from "./components/LoadingSpinner.vue";
-
-const postForPage = 10;
-
-const listPost = ref([]);
-const favoritePost = ref({});
-const pageStart = ref(0);
-const pageEnd = ref(postForPage);
-const loading = ref(true);
-
-const fetchData = async () => {
-  try {
-    const res = await fetch("https://jsonplaceholder.typicode.com/posts");
-    const data = await res.json();
-    listPost.value = data;
-  } catch (error) {
-    console.log("Error:", error);
-  } finally {
-    //forced to show spinner
-    setTimeout(()=> {
-      loading.value = false;
-    }, 1500)
-  }
-};
-
-/**
- * Determines if the click is to 10 next posts or 10 previuos posts, True is to next and False is to previuos.
- *
- * @param {boolean} clickPage - The boolean to determine click.
- * @returns {void}
- */
-const handlePage = (clickPage) => {
-  if (clickPage && pageEnd.value < listPost.value.length) {
-    pageStart.value += postForPage;
-    pageEnd.value += postForPage;
-  } else if (!clickPage && pageStart.value > 0) {
-    pageStart.value -= postForPage;
-    pageEnd.value -= postForPage;
-  }
-};
-
-const handleFavoritePost = (post) => {
-  favoritePost.value = post;
-};
-
-const maxLength = computed(() => listPost.value.length);
-
-onMounted(() => {
-  fetchData();
-});
+import { RouterLink, RouterView } from 'vue-router'
+import HelloWorld from './components/HelloWorld.vue'
 </script>
 
 <template>
-  <div class="spinner" v-if="loading">
-    <LoadingSpinner></LoadingSpinner>
-  </div>
+  <header>
+    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
 
-  <main class="container" v-else>
-    <h1>List Posts</h1>
-    <ButtonNextPrev
-      :pageStart="pageStart"
-      :pageEnd="pageEnd"
-      @handlePage="handlePage"
-      :maxLength="maxLength"
-    ></ButtonNextPrev>
-    <div class="post-title">
-      <h3 class="post-favorite">Favorite post id: {{ favoritePost.id }}</h3>
-      <h4 class="post-pagination">{{ pageStart + 1 }}-{{ pageEnd }}</h4>
+    <div class="wrapper">
+      <HelloWorld msg="You did it!" />
+
+      <nav>
+        <RouterLink to="/">Home</RouterLink>
+        <RouterLink to="/about">About</RouterLink>
+        <RouterLink to="/comments">Comments</RouterLink>
+        <RouterLink to="/comments/favorites">Favorites</RouterLink>
+      </nav>
     </div>
+  </header>
 
-    <section>
-      <PostCard
-        v-for="post in listPost.slice(pageStart, pageEnd)"
-        :key="post.id"
-        :post="post"
-        @handleFavoritePost="handleFavoritePost"
-      ></PostCard>
-    </section>
-  </main>
+  <RouterView />
 </template>
 
-<style>
-.container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  justify-items: center;
+<style scoped>
+header {
+  line-height: 1.5;
+  max-height: 100vh;
 }
 
-h1 {
-  color: #fff;
-  font-size: 4rem;
+.logo {
+  display: block;
+  margin: 0 auto 2rem;
+}
+
+nav {
+  width: 100%;
+  font-size: 12px;
   text-align: center;
+  margin-top: 2rem;
 }
 
-.post-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+nav a.router-link-exact-active {
+  color: var(--color-text);
+}
+
+nav a.router-link-exact-active:hover {
+  background-color: transparent;
+}
+
+nav a {
+  display: inline-block;
   padding: 0 1rem;
+  border-left: 1px solid var(--color-border);
 }
 
-.post-favorite {
-  color: #fff;
-  margin-top: 1rem;
+nav a:first-of-type {
+  border: 0;
 }
 
-.post-pagination {
-  margin-top: 1rem;
-  color: #e3e3e3;
-}
+@media (min-width: 1024px) {
+  header {
+    display: flex;
+    place-items: center;
+    padding-right: calc(var(--section-gap) / 2);
+  }
 
-.spinner {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  .logo {
+    margin: 0 2rem 0 0;
+  }
+
+  header .wrapper {
+    display: flex;
+    place-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  nav {
+    text-align: left;
+    margin-left: -1rem;
+    font-size: 1rem;
+
+    padding: 1rem 0;
+    margin-top: 1rem;
+  }
 }
 </style>
